@@ -6,16 +6,17 @@ IMAGE_NET_HEIGHT = FINAL_HEIGHT - BOTTOM_PADDING
 
 RESIZED_SUFFIX = "-resized"
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from PIL import Image
+from send2trash import send2trash
 
 
 def main():
     filename = check_arguments_or_print_usage_and_exit()
-    if filename == '--all':
-        resize_all_images()
+    if filename in ['--all', '--all-and-trash']:
+        resize_all_images(trash=(filename == '--all-and-trash'))
     else:
         resize_single_image(Path(filename))
 
@@ -27,23 +28,28 @@ def check_arguments_or_print_usage_and_exit():
         tapetovac.py picture.jpg
       or
         tapetovac.py --all
+        tapetovac.py --all-and-trash
 
       The second form will try to resize all found JPGs.
       It will skip any files ending with '{}' suffix or files where corresponding resized file exists.
+      If --all-and-trash is specified, the original file is send to trash/recycle bin after succesfull conversion.
       """.format(RESIZED_SUFFIX), file=sys.stderr)
         sys.exit(-1)
     return sys.argv[1]
 
 
-def resize_all_images():
+def resize_all_images(trash=False):
     print("Resizing all JPGs...")
     for filename in sorted(Path('.').glob("*.jpg")):
-        resize_single_image(filename)
+        resize_single_image(filename, trash=trash)
 
 
-def resize_single_image(filename):
+def resize_single_image(filename, trash=False):
     try:
         real_resize_single_image(filename)
+        if trash:
+            send2trash(str(filename))
+
     except Exception as error:
         print(error)
 
