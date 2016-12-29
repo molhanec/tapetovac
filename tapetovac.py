@@ -46,8 +46,8 @@ def resize_all_images(path=".", trash=False):
 
 def resize_single_image(filename, trash=False):
     try:
-        real_resize_single_image(filename)
-        if trash:
+        resized = real_resize_single_image(filename)
+        if resized and trash:
             send2trash(str(filename))
 
     except Exception as error:
@@ -55,7 +55,7 @@ def resize_single_image(filename, trash=False):
 
 
 def real_resize_single_image(filename):
-    if is_already_converted(filename): return
+    if is_already_converted(filename): return False
     print("Resizing", filename)
 
     # Load source image
@@ -87,6 +87,8 @@ def real_resize_single_image(filename):
 
     # Save the final image
     final_image.save(resized_image_filename(filename), quality=95, optimize=True)
+
+    return True
 
 
 def is_already_converted(filename):
