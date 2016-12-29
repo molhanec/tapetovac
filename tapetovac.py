@@ -38,9 +38,9 @@ def check_arguments_or_print_usage_and_exit():
     return sys.argv[1]
 
 
-def resize_all_images(trash=False):
+def resize_all_images(path=".", trash=False):
     print("Resizing all JPGs...")
-    for filename in sorted(Path('.').glob("*.jpg")):
+    for filename in sorted(Path(path).glob("*.jpg")):
         resize_single_image(filename, trash=trash)
 
 
