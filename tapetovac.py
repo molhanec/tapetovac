@@ -81,9 +81,9 @@ def real_resize_single_image(filename):
         # Scale the image to required height
         resized_image = src_image.resize((width_for_required_height, IMAGE_NET_HEIGHT), Image.LANCZOS)
 
-    # Put the rescaled image at horizontal middle
-    horizontal_middle = (FINAL_WIDTH - width_for_required_height) // 2
-    final_image.paste(resized_image, (horizontal_middle, 0))
+        # Put the rescaled image at horizontal middle
+        horizontal_middle = (FINAL_WIDTH - width_for_required_height) // 2
+        final_image.paste(resized_image, (horizontal_middle, 0))
 
     # Save the final image
     final_image.save(resized_image_filename(filename), quality=95, optimize=True)
