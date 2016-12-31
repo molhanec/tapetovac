@@ -4,7 +4,7 @@ from tkinter.scrolledtext import ScrolledText
 
 import moltools3
 
-from tapetovac import resize_all_images
+from tapetovac import Tapetovac
 
 
 class Application(Frame):
@@ -51,7 +51,8 @@ class Application(Frame):
         try:
             sys.stdout = self
             sys.stderr = self
-            resize_all_images(path=self.path.get(), trash=self.trash_resized.get())
+            tapetovac = Tapetovac(trash_after_resize=self.trash_resized.get())
+            tapetovac.resize_all_images(path=self.path.get())
         finally:
             self.write("DONE\n")
             self.log.config(state="disabled")
