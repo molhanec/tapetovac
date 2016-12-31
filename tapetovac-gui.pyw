@@ -18,24 +18,24 @@ class Application(Frame):
 
         self.pack(fill=X, expand=1)
         self.create_widgets()
+        self.grid(sticky=NSEW)
+        master.grid_columnconfigure(0, weight=1)
+        master.grid_rowconfigure(0, weight=1)
 
     def create_widgets(self):
-        Label(self, text='Folder:').pack(fill=X,expand=0)
-        Entry(self, textvariable=self.path).pack(fill=BOTH, expand=1)
-        Button(self, text="Change folder", command=self.change_folder).pack(fill=BOTH, expand=1)
+        Label(self, text='Folder:').grid(row=0, column=0, sticky=E)
+        Entry(self, textvariable=self.path).grid(row=0, column=1, sticky=EW)
+        Button(self, text="Change folder", command=self.change_folder).grid(row=0, column=2, sticky=W)
 
-        Checkbutton(self, text="Move files to trash after resizing", variable=self.trash_resized).pack(fill=BOTH, expand=1)
+        Checkbutton(self, text="Move files to trash after resizing", variable=self.trash_resized).grid(row=1, columnspan=3, sticky=EW)
 
-        Button(self, text="Run", command=self.run).pack(fill=BOTH, expand=1)
-
-        quit_button = Button(self)
-        quit_button["text"] = "QUIT"
-        quit_button["fg"]   = "red"
-        quit_button["command"] = self.winfo_toplevel().destroy
-        quit_button.pack(fill=BOTH, expand=1)
+        Button(self, text="Run", command=self.run).grid(row=2, column=1)
 
         self.log = ScrolledText(self)
-        self.log.pack(fill=BOTH, expand=1)
+        self.log.grid(row=3, columnspan=3, sticky=NSEW)
+
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(3, weight=1)
 
     def change_folder(self):
         path = askdirectory(initialdir=self.path)
