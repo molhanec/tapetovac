@@ -95,12 +95,12 @@ class Tapetovac:
             final_image.paste(resized_image, (horizontal_middle, 0))
 
         # Save the final image
-        final_image.save(resized_image_filename(filename), quality=95, optimize=True)
+        final_image.save(self.resized_image_filename(filename), quality=95, optimize=True)
 
         return True
 
     def is_already_converted(self, filename):
-        return filename.stem.endswith(self.resized_suffix) or resized_image_filename(filename).exists()
+        return filename.stem.endswith(self.resized_suffix) or self.resized_image_filename(filename).exists()
 
     def resized_image_filename(self, filename):
         return filename.with_name(filename.stem + self.resized_suffix + ".jpg")

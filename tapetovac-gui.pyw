@@ -32,7 +32,11 @@ class Application(Frame):
 
         self.config = moltools3.load_or_create_app_config("tapetovac")
         self.path = StringVar(value=self.config.get("path"))
-        self.resolution = StringVar(value=str(POSSIBLE_RESOLUTIONS[0]))
+        try:
+            resolution = POSSIBLE_RESOLUTIONS[int(self.config.get("resolution_index"))]
+        except:
+            resolution = POSSIBLE_RESOLUTIONS[0]
+        self.resolution = StringVar(value=str(resolution))
         self.trash_resized = BooleanVar(value=self.config.get("trash", default=False))
 
         self.pack(fill=X, expand=1)
@@ -77,6 +81,7 @@ class Application(Frame):
     def run(self):
         self.config.set_and_save("path", self.path.get())
         self.config.set_and_save("trash", self.trash_resized.get())
+        self.config.set_and_save("resolution_index", self.resolutions.current())
         self.log.config(state="normal")
         self.log.delete(1.0, END)
         try:
@@ -84,9 +89,15 @@ class Application(Frame):
             sys.stderr = self
             tapetovac = Tapetovac(trash_after_resize=self.trash_resized.get())
             resolution = POSSIBLE_RESOLUTIONS[self.resolutions.current()]
-            tapetovac.final_width = resolution.width
-            tapetovac.final_height = resolution.height
-            tapetovac.image_net_height = resolution.height - resolution.bottom
+            if resolution.orientation == "horizontal":
+                width = resolution.width
+                height = resolution.height
+            else:
+                height = resolution.width
+                width = resolution.height
+            tapetovac.final_width = width
+            tapetovac.final_height = height
+            tapetovac.image_net_height = height - resolution.bottom
             tapetovac.resize_all_images(path=self.path.get())
         finally:
             self.write("DONE\n")
