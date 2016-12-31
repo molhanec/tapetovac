@@ -46,7 +46,6 @@ class Application(Frame):
     def run(self):
         self.config.set_and_save("path", self.path.get())
         self.config.set_and_save("trash", self.trash_resized.get())
-        # if self.log.get():
         self.log.config(state="normal")
         self.log.delete(1.0, END)
         try:
@@ -66,6 +65,7 @@ class Application(Frame):
         self.log.see(END)
         self.log.config(state="disabled")
         self.update_idletasks()
+
 
 root = Tk()
 app = Application(master=root)
