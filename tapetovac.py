@@ -64,11 +64,16 @@ class Tapetovac:
             print(error)
 
     def real_resize_single_image(self, filename):
+        "Returns True if the original file is not needed anymore."
+
         if self.is_already_converted(filename): return False
         print("Resizing", filename)
 
         # Load source image
         src_image = Image.open(filename)
+        if self.dont_need_resizing(src_image):
+            print("Image does not need resizing", filename)
+            return False
 
         # Create final canvas
         final_image = Image.new(src_image.mode, (self.final_width, self.final_height))
@@ -104,6 +109,13 @@ class Tapetovac:
 
     def resized_image_filename(self, filename):
         return filename.with_name(filename.stem + self.resized_suffix + ".jpg")
+
+    def dont_need_resizing(self, image):
+        # Always resize when there is border
+        return self.empty_border() and image.width == self.final_width and image.height == self.final_height
+
+    def empty_border(self):
+        return self.image_net_height == self.final_height
 
 
 if __name__ == '__main__':
