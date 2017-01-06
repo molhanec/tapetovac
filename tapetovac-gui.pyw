@@ -29,6 +29,7 @@ POSSIBLE_RESOLUTIONS = [
 
 
 class Config:
+    KEY_PATH_HISTORY = "path_history"
     KEY_PATH = "path"
     KEY_RESOLUTION = "resolution_index"
     KEY_SAVE_CONFIG_IN_FOLDER = "save_config_in_folder"
@@ -47,6 +48,14 @@ class Config:
     @path.setter
     def path(self, value):
         self.config.set(Config.KEY_PATH, value)
+
+    @property
+    def path_history(self):
+        return self.config.get(Config.KEY_PATH_HISTORY)
+
+    @path_history.setter
+    def path_history(self, value):
+        self.config.set(Config.KEY_PATH_HISTORY, value)
 
     @property
     def resolution(self):
@@ -80,6 +89,9 @@ class Application(Frame):
 
         self.config = Config()
         self.path = StringVar(value=self.config.path)
+        self.path_history = self.config.path_history
+        if not self.path_history:
+            self.path_history = []
         resolution = POSSIBLE_RESOLUTIONS[int(self.config.resolution)]
         self.resolution = StringVar(value=str(resolution))
         self.trash_resized = BooleanVar(value=self.config.trash)
@@ -96,7 +108,9 @@ class Application(Frame):
     def create_widgets(self):
         current_row = 0
         Label(self, text='Folder:').grid(row=current_row, column=0, sticky=E)
-        Entry(self, textvariable=self.path).grid(row=current_row, column=1, sticky=EW)
+        self.path_combo = Combobox(self, textvariable=self.path)
+        self.set_path_history()
+        self.path_combo.grid(row=current_row, column=1, sticky=EW)
         Button(self, text="Change folder", command=self.change_folder).grid(row=current_row, column=2, sticky=W)
 
         current_row += 1
@@ -123,12 +137,21 @@ class Application(Frame):
 
         self.grid_columnconfigure(1, weight=1)
 
+    def set_path_history(self):
+        self.path_history.sort()
+        self.path_combo['values'] = self.path_history
+
     def change_folder(self):
         path = askdirectory(initialdir=self.path)
         if path:
             self.config.path = path
             self.config.save()
             self.path.set(path)
+            for old_path in self.path_history:
+                if path == old_path: break
+            else:
+                self.path_history.append(path)
+                self.set_path_history()
             self.load_folder_config()
 
     def load_folder_config(self):
@@ -169,6 +192,7 @@ class Application(Frame):
 
     def save_config(self, resolution):
         self.config.path = self.path.get()
+        self.config.path_history = self.path_history
         self.config.trash = self.trash_resized.get()
         self.config.save_config_in_folder = self.save_config_in_folder.get()
         self.config.resolution_index = self.resolutions.current()
