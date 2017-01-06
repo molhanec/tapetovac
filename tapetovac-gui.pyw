@@ -1,5 +1,6 @@
 from collections import namedtuple
 from contextlib import contextmanager
+from pathlib import Path
 
 from tkinter import *
 from tkinter.filedialog import askdirectory
@@ -90,6 +91,8 @@ class Application(Frame):
         master.grid_columnconfigure(0, weight=1)
         master.grid_rowconfigure(0, weight=1)
 
+        self.load_folder_config()
+
     def create_widgets(self):
         current_row = 0
         Label(self, text='Folder:').grid(row=current_row, column=0, sticky=E)
@@ -126,15 +129,29 @@ class Application(Frame):
             self.config.path = path
             self.config.save()
             self.path.set(path)
+            self.load_folder_config()
+
+    def load_folder_config(self):
+        folder_config_path = Path(self.path.get()) / "tapetovac.ini"
+        if folder_config_path.exists():
+            folder_config = EasySettings(str(folder_config_path))
+            width  = folder_config.get("width")
+            height = folder_config.get("height")
+            bottom = folder_config.get("bottom")
+            self.trash_resized.set(folder_config.get("trash"))
+            for i, resolution in enumerate(POSSIBLE_RESOLUTIONS):
+                if resolution.width  == width and resolution.height == height and resolution.bottom == bottom:
+                    self.resolutions.current(i)
+                    return
 
     def run(self):
-        self.save_config()
+        resolution = POSSIBLE_RESOLUTIONS[self.resolutions.current()]
+        self.save_config(resolution)
         self.clear_log()
         try:
             sys.stdout = self
             sys.stderr = self
             tapetovac = Tapetovac(trash_after_resize=self.trash_resized.get())
-            resolution = POSSIBLE_RESOLUTIONS[self.resolutions.current()]
             if resolution.orientation == "horizontal":
                 width = resolution.width
                 height = resolution.height
@@ -150,12 +167,26 @@ class Application(Frame):
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
 
-    def save_config(self):
+    def save_config(self, resolution):
         self.config.path = self.path.get()
         self.config.trash = self.trash_resized.get()
         self.config.save_config_in_folder = self.save_config_in_folder.get()
         self.config.resolution_index = self.resolutions.current()
         self.config.save()
+        if self.save_config_in_folder.get():
+            current_folder_config = EasySettings()
+            current_folder_config.set("width",  resolution.width)
+            current_folder_config.set("height", resolution.height)
+            current_folder_config.set("bottom", resolution.bottom)
+            current_folder_config.set("trash",  self.trash_resized.get())
+            folder_config_path = Path(self.path.get()) / "tapetovac.ini"
+            if folder_config_path.exists():
+                # does not hold file open
+                existing_folder_config = EasySettings(str(folder_config_path))
+                if existing_folder_config == current_folder_config:
+                    return
+            current_folder_config.save(str(folder_config_path))
+
 
     def clear_log(self):
         with self.enable_log():
