@@ -1,9 +1,12 @@
 from collections import namedtuple
+from contextlib import contextmanager
 
 from tkinter import *
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
 from tkinter.ttk import Combobox
+
+from easysettings import EasySettings
 
 import moltools3
 from tapetovac import Tapetovac
@@ -125,13 +128,8 @@ class Application(Frame):
             self.path.set(path)
 
     def run(self):
-        self.config.path = self.path.get()
-        self.config.trash = self.trash_resized.get()
-        self.config.save_config_in_folder = self.save_config_in_folder.get()
-        self.config.resolution_index = self.resolutions.current()
-        self.config.save()
-        self.log.config(state="normal")
-        self.log.delete(1.0, END)
+        self.save_config()
+        self.clear_log()
         try:
             sys.stdout = self
             sys.stderr = self
@@ -149,17 +147,32 @@ class Application(Frame):
             tapetovac.resize_all_images(path=self.path.get())
         finally:
             self.write("DONE\n")
-            self.log.config(state="disabled")
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
 
+    def save_config(self):
+        self.config.path = self.path.get()
+        self.config.trash = self.trash_resized.get()
+        self.config.save_config_in_folder = self.save_config_in_folder.get()
+        self.config.resolution_index = self.resolutions.current()
+        self.config.save()
+
+    def clear_log(self):
+        with self.enable_log():
+            self.log.delete(1.0, END)
+
     # For stdout/stderr redirection
     def write(self, msg):
-        self.log.config(state="normal")
-        self.log.insert(END, msg)
-        self.log.see(END)
-        self.log.config(state="disabled")
+        with self.enable_log():
+            self.log.insert(END, msg)
+            self.log.see(END)
         self.update_idletasks()
+
+    @contextmanager
+    def enable_log(self):
+        self.log.config(state="normal")
+        yield
+        self.log.config(state="disabled")
 
 
 root = Tk()
