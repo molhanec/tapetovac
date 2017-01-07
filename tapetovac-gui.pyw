@@ -7,8 +7,6 @@ from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
 from tkinter.ttk import Combobox
 
-from easysettings import EasySettings
-
 import moltools3
 from tapetovac import Tapetovac
 
@@ -51,15 +49,15 @@ class Config:
 
     @property
     def path_history(self):
-        return self.config.get(Config.KEY_PATH_HISTORY)
+        return self.config.get_list(Config.KEY_PATH_HISTORY)
 
     @path_history.setter
     def path_history(self, value):
-        self.config.set(Config.KEY_PATH_HISTORY, value)
+        self.config.set_list(Config.KEY_PATH_HISTORY, value)
 
     @property
     def resolution(self):
-        return self.config.get(Config.KEY_RESOLUTION, default=0)
+        return self.config.get_int(Config.KEY_RESOLUTION)
 
     @resolution.setter
     def resolution(self, value):
@@ -67,7 +65,7 @@ class Config:
 
     @property
     def save_config_in_folder(self):
-        return self.config.get(Config.KEY_SAVE_CONFIG_IN_FOLDER, default=True)
+        return self.config.get_bool(Config.KEY_SAVE_CONFIG_IN_FOLDER, default=True)
 
     @save_config_in_folder.setter
     def save_config_in_folder(self, value):
@@ -75,7 +73,7 @@ class Config:
 
     @property
     def trash(self):
-        return self.config.get(Config.KEY_TRASH, default=False)
+        return self.config.get_bool(Config.KEY_TRASH, default=False)
 
     @trash.setter
     def trash(self, value):
@@ -111,6 +109,7 @@ class Application(Frame):
         self.path_combo = Combobox(self, textvariable=self.path)
         self.set_path_history()
         self.path_combo.grid(row=current_row, column=1, sticky=EW)
+        self.path_combo.bind('<<ComboboxSelected>>', lambda _: self.load_folder_config())
         Button(self, text="Change folder", command=self.change_folder).grid(row=current_row, column=2, sticky=W)
 
         current_row += 1
@@ -157,11 +156,11 @@ class Application(Frame):
     def load_folder_config(self):
         folder_config_path = Path(self.path.get()) / "tapetovac.ini"
         if folder_config_path.exists():
-            folder_config = EasySettings(str(folder_config_path))
-            width  = folder_config.get("width")
-            height = folder_config.get("height")
-            bottom = folder_config.get("bottom")
-            self.trash_resized.set(folder_config.get("trash"))
+            folder_config = moltools3.MolConfig(folder_config_path)
+            width  = folder_config.get_int("width")
+            height = folder_config.get_int("height")
+            bottom = folder_config.get_int("bottom")
+            self.trash_resized.set(folder_config.get_bool("trash"))
             for i, resolution in enumerate(POSSIBLE_RESOLUTIONS):
                 if resolution.width  == width and resolution.height == height and resolution.bottom == bottom:
                     self.resolutions.current(i)
@@ -198,18 +197,20 @@ class Application(Frame):
         self.config.resolution_index = self.resolutions.current()
         self.config.save()
         if self.save_config_in_folder.get():
-            current_folder_config = EasySettings()
+            folder_config_path = Path(self.path.get()) / "tapetovac.ini"
+            if folder_config_path.exists():
+                existing_folder_config = moltools3.MolConfig(folder_config_path)
+                if      existing_folder_config.get_int("width")  == resolution.width  and \
+                        existing_folder_config.get_int("height") == resolution.height and \
+                        existing_folder_config.get_int("bottom") == resolution.bottom and \
+                        existing_folder_config.get_bool("trash") == self.trash_resized.get():
+                    return
+            current_folder_config = moltools3.MolConfig(folder_config_path)
             current_folder_config.set("width",  resolution.width)
             current_folder_config.set("height", resolution.height)
             current_folder_config.set("bottom", resolution.bottom)
             current_folder_config.set("trash",  self.trash_resized.get())
-            folder_config_path = Path(self.path.get()) / "tapetovac.ini"
-            if folder_config_path.exists():
-                # does not hold file open
-                existing_folder_config = EasySettings(str(folder_config_path))
-                if existing_folder_config == current_folder_config:
-                    return
-            current_folder_config.save(str(folder_config_path))
+            current_folder_config.save()
 
 
     def clear_log(self):
